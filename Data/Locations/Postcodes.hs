@@ -16,17 +16,19 @@ data Postcode = Postcode {_postcode :: String,
 
 instance FromJSON Postcode where
     parseJSON (Object v) = Postcode <$> v .: "postcode" 
-                                    <*> (fmap read $ getInP "lat" geo)
-                                    <*> (fmap read $ getInP "lng" geo)
-                                    <*> (fmap Just . getInP "title" . getInP "constituency" $ admin)
-                                    <*> (fmap Just . getInP "title" . getInP "district" $ admin)
+                                    <*> (read <$> getInP "lat" geo)
+                                    <*> (read <$> getInP "lng" geo)
+                                    <*> (Just <$> (getInP "title" . getInP "constituency" $ admin))
+                                    <*> (Just <$> (getInP "title" . getInP "district" $ admin))
         where geo          = v .: "geo"
               admin        = v .: "administrative" 
               getInP k p   = flip (.:) k =<< p 
 
 instance FromJSON (Float, Postcode) where
     parseJSON (Object v) = (,) <$> (read <$> v .: "distance")
-                               <*> (Postcode <$> v .: "postcode" <*> (read <$> v.: "lat") <*> (read <$> v.: "lng") 
+                               <*> (Postcode <$> v .: "postcode" 
+                                             <*> (read <$> v.: "lat") 
+                                             <*> (read <$> v.: "lng") 
                                              <*> pure Nothing <*> pure Nothing)
 
 baseURL :: String
@@ -35,13 +37,13 @@ baseURL = "http://uk-postcodes.com"
 -- | Return a Postcode for the postcode string. This uses the network
 getPostcode :: String               -- ^ The postcode
             -> IO (Maybe Postcode)  -- ^ Either Just a postcode or Nothing if it could not be found
-getPostcode pc = postcodeRequest ("/postcode/" ++ map toUpper pc ++ ".json")
+getPostcode pc = postcodeRequest ("/postcode/" ++ sanatisePostcode pc ++ ".json")
 
 -- | Find all the postcodes within a given range and return a postcode and the distance for each. This uses the network
 getPostcodesInRange :: String                         -- ^ The postcode to be the centre of the search
                     -> Float                          -- ^ The radius to search in miles
                     -> IO (Maybe [(Float, Postcode)]) -- ^ Either Just a list of tuples of distance and postcode or Nothing if the given postcode could not be found
-getPostcodesInRange pc range = postcodeRequest ("/distance.php?postcode=" ++ pc ++ "&distance=" ++ show range ++ "&format=json")
+getPostcodesInRange pc range = postcodeRequest ("/distance.php?postcode=" ++ sanatisePostcode pc ++ "&distance=" ++ show range ++ "&format=json")
 
 -- | Find the postcode at the given latitude and longitude
 getPostcodeAtLocation :: Float               -- ^ Latitude
@@ -53,3 +55,8 @@ postcodeRequest :: FromJSON a => String -> IO (Maybe a)
 postcodeRequest url = do
     response <- getResponseBody =<< simpleHTTP (getRequest $ baseURL ++ url)
     return (decode $ BL.pack response)
+
+sanatisePostcode :: String -> String
+sanatisePostcode = removeSpace . map toUpper
+removeSpace :: String -> String
+removeSpace = filter (/= ' ')
