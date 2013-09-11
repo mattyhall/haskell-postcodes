@@ -3,14 +3,16 @@
 
 name:                postcodes
 version:             0.1.0
-synopsis:            A module that gets postcode information from the internet
--- description:         
+synopsis:            A library that gets postcode information from the uk-postcodes.com
+description:         This library uses uk-postcodes.com to find the latitude and longitude of a postcode, postcodes in a certain area and the postcode that a location fits into
 license:             BSD3
 license-file:        LICENSE
 author:              Matthew Hall
 maintainer:          hailmattyhalluk@gmail.com
+homepage:			 https://github.com/mattyhall/haskell-postcodes
+bug-reports:		 https://github.com/mattyhall/haskell-postcodes/issues
 -- copyright:           
--- category:            
+category:            Network APIs
 build-type:          Simple
 cabal-version:       >=1.8
 

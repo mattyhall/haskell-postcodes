@@ -58,5 +58,6 @@ postcodeRequest url = do
 
 sanatisePostcode :: String -> String
 sanatisePostcode = removeSpace . map toUpper
+
 removeSpace :: String -> String
 removeSpace = filter (/= ' ')
